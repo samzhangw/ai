@@ -1,0 +1,510 @@
+<html><head><base href="https://ai-rps-game.example.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>剪刀石頭布遊戲 | Rock Paper Scissors AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --accent-color: #e74c3c;
+    --background-color: #ecf0f1;
+    --text-color: #34495e;
+    --card-bg-color: #ffffff;
+  }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 3em;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .game-area {
+    background-color: var(--card-bg-color);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+
+  .game-area:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+  }
+
+  #video-container {
+    width: 100%;
+    height: 480px;
+    background-color: #000;
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  #video, #canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  #canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+
+  .button {
+    flex: 1;
+    padding: 15px;
+    font-size: 18px;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  #start-button {
+    background-color: var(--secondary-color);
+    margin-right: 15px;
+  }
+
+  #start-button:hover {
+    background-color: #27ae60;
+  }
+
+  #stop-button {
+    background-color: var(--accent-color);
+  }
+
+  #stop-button:hover {
+    background-color: #c0392b;
+  }
+
+  #game-result, #camera-feedback {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+
+  #game-result {
+    top: 10px;
+    left: 10px;
+  }
+
+  #camera-feedback {
+    top: 10px;
+    right: 10px;
+  }
+
+  #pose-icon {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 80px;
+    height: 80px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 40px;
+  }
+
+  #error-message, #loading {
+    text-align: center;
+    margin-top: 20px;
+    font-weight: bold;
+  }
+
+  #error-message {
+    color: var(--accent-color);
+  }
+
+  #loading {
+    color: var(--primary-color);
+  }
+
+  #instructions {
+    background-color: #f0f8ff;
+    border: 1px solid #b0d4ff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+
+  #instructions h2 {
+    color: var(--primary-color);
+    margin-top: 0;
+  }
+
+  #instructions ul {
+    padding-left: 20px;
+  }
+
+  #animation-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 100px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  #countdown {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 100px;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    z-index: 10;
+  }
+
+  @keyframes punchAnimation {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  }
+
+  .punch-animation {
+    animation: punchAnimation 0.5s ease-out;
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+    }
+    .game-area {
+      padding: 20px;
+    }
+    #video-container {
+      height: 300px;
+    }
+    .button {
+      font-size: 16px;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>剪刀石頭布遊戲 | Rock Paper Scissors AI</h1>
+    <div class="game-area">
+      <div id="instructions">
+        <h2>遊戲說明</h2>
+        <ul>
+          <li>確保你的攝影機已開啟並授權使用。</li>
+          <li>點擊"開始遊戲"按鈕開始遊戲。</li>
+          <li>在攝影機前做出剪刀(✌️)、石頭(✊)或布(✋)的手勢。</li>
+          <li>系統會自動偵測你的手勢並與AI進行對戰。</li>
+          <li>遊戲結果會即時顯示在畫面上。</li>
+          <li>隨時可以點擊"停止遊戲"按鈕結束遊戲。</li>
+        </ul>
+      </div>
+      <div id="video-container">
+        <video id="video" autoplay muted></video>
+        <canvas id="canvas"></canvas>
+        <div id="camera-feedback"></div>
+        <div id="game-result"></div>
+        <div id="pose-icon"></div>
+        <div id="animation-container"></div>
+        <div id="countdown"></div>
+      </div>
+      <div class="button-container">
+        <button id="start-button" class="button">開始遊戲</button>
+        <button id="stop-button" class="button" disabled>停止遊戲</button>
+      </div>
+      <div id="error-message"></div>
+      <div id="loading"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const startButton = document.getElementById('start-button');
+    const stopButton = document.getElementById('stop-button');
+    const errorMessage = document.getElementById('error-message');
+    const loading = document.getElementById('loading');
+    const cameraFeedback = document.getElementById('camera-feedback');
+    const gameResult = document.getElementById('game-result');
+    const poseIcon = document.getElementById('pose-icon');
+    const animationContainer = document.getElementById('animation-container');
+    const countdownElement = document.getElementById('countdown');
+
+    const gestures = ['✊', '✌️', '✋'];
+    let handposeModel;
+    let isDetecting = false;
+    let currentRound = 0;
+    let playerScore = 0;
+    let aiScore = 0;
+    let lastGestureTime = 0;
+    const gestureCooldown = 2000; // 2 seconds cooldown
+    let lastPredictions = [];
+    let handDetectedTime = 0;
+    let isCountingDown = false;
+    const countdownDelay = 3000; // 3 seconds
+
+    function updateGameStatus() {
+      gameResult.innerHTML = `
+        <h3>遊戲狀態</h3>
+        <p>回合: ${currentRound}</p>
+        <p>玩家得分: ${playerScore}</p>
+        <p>AI得分: ${aiScore}</p>
+      `;
+    }
+
+    function detectGesture(predictions) {
+      if (predictions.length > 0) {
+        const hand = predictions[0];
+        const thumb = hand.annotations.thumb;
+        const indexFinger = hand.annotations.indexFinger;
+        const middleFinger = hand.annotations.middleFinger;
+        const ringFinger = hand.annotations.ringFinger;
+        const pinky = hand.annotations.pinky;
+
+        const fingersExtended = [
+          indexFinger[3][1] < indexFinger[0][1],
+          middleFinger[3][1] < middleFinger[0][1],
+          ringFinger[3][1] < ringFinger[0][1],
+          pinky[3][1] < pinky[0][1]
+        ];
+
+        const extendedCount = fingersExtended.filter(Boolean).length;
+
+        if (extendedCount === 0) {
+          return '✊'; // Rock
+        } else if (extendedCount === 2 && fingersExtended[0] && fingersExtended[1]) {
+          return '✌️'; // Scissors
+        } else if (extendedCount >= 4) {
+          return '✋'; // Paper
+        }
+      }
+      return null;
+    }
+
+    function playPunchAnimation(gesture) {
+      animationContainer.textContent = gesture;
+      animationContainer.style.opacity = '1';
+      animationContainer.classList.add('punch-animation');
+      setTimeout(() => {
+        animationContainer.style.opacity = '0';
+        animationContainer.classList.remove('punch-animation');
+      }, 500);
+    }
+
+    function startCountdown() {
+      isCountingDown = true;
+      let count = 3;
+      countdownElement.textContent = count;
+      
+      const countInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countdownElement.textContent = count;
+        } else {
+          clearInterval(countInterval);
+          countdownElement.textContent = '';
+          isCountingDown = false;
+          const playerGesture = detectGesture(lastPredictions);
+          if (playerGesture) {
+            playRound(playerGesture);
+          } else {
+            cameraFeedback.textContent = '未檢測到有效手勢。請重新嘗試。';
+          }
+        }
+      }, 1000);
+    }
+
+    async function detectHand() {
+      if (!isDetecting) return;
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      try {
+        const predictions = await handposeModel.estimateHands(video);
+        lastPredictions = predictions;
+        
+        if (predictions.length > 0) {
+          const currentTime = Date.now();
+          if (!isCountingDown && currentTime - handDetectedTime > countdownDelay) {
+            handDetectedTime = currentTime;
+            startCountdown();
+          }
+          
+          const playerGesture = detectGesture(predictions);
+          if (playerGesture) {
+            poseIcon.textContent = playerGesture;
+          }
+        }
+
+        requestAnimationFrame(detectHand);
+      } catch (error) {
+        console.error('手勢偵測錯誤:', error);
+        errorMessage.textContent = '手勢偵測過程中發生錯誤，請重新開始遊戲。';
+        isDetecting = false;
+        startButton.disabled = false;
+        stopButton.disabled = true;
+      }
+    }
+
+    function playRound(playerGesture) {
+      const currentTime = Date.now();
+      if (currentTime - lastGestureTime < gestureCooldown) {
+        return; // Ignore gestures during cooldown
+      }
+      lastGestureTime = currentTime;
+
+      if (!playerGesture) {
+        cameraFeedback.textContent = '無效回合！未檢測到有效手勢。請再試一次。';
+        return; // Skip the round if no valid gesture is detected
+      }
+
+      const aiGesture = gestures[Math.floor(Math.random() * gestures.length)];
+      currentRound++;
+
+      playPunchAnimation(playerGesture);
+      setTimeout(() => playPunchAnimation(aiGesture), 250);
+
+      let result;
+      if (playerGesture === aiGesture) {
+        result = '平局';
+      } else if (
+        (playerGesture === '✊' && aiGesture === '✌️') ||
+        (playerGesture === '✌️' && aiGesture === '✋') ||
+        (playerGesture === '✋' && aiGesture === '✊')
+      ) {
+        result = '玩家贏';
+        playerScore++;
+      } else {
+        result = 'AI贏';
+        aiScore++;
+      }
+
+      setTimeout(() => {
+        cameraFeedback.textContent = `玩家出 ${playerGesture}，AI出 ${aiGesture}。${result}！`;
+        updateGameStatus();
+      }, 500);
+    }
+
+    async function loadModel() {
+      loading.textContent = '正在載入遊戲系統，請稍候...';
+      try {
+        handposeModel = await handpose.load();
+        loading.textContent = '遊戲系統已準備就緒！';
+        errorMessage.textContent = '';
+      } catch (error) {
+        console.error('模型載入失敗:', error);
+        errorMessage.textContent = '模型載入失敗，請檢查網路連接並重新整理頁面。';
+        loading.textContent = '';
+      }
+    }
+
+    async function setupCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        video.srcObject = stream;
+        return new Promise((resolve) => {
+          video.onloadedmetadata = () => {
+            resolve(video);
+          };
+        });
+      } catch (error) {
+        console.error('攝影機設置失敗:', error);
+        errorMessage.textContent = '無法存取攝影機，請確保已授予權限。';
+      }
+    }
+
+    async function init() {
+      try {
+        await setupCamera();
+        video.play();
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        loading.textContent = '系統已準備就緒，請點擊"開始遊戲"按鈕。';
+      } catch (error) {
+        console.error('初始化失敗:', error);
+        errorMessage.textContent = '系統初始化失敗，請重新整理頁面。';
+        loading.textContent = '';
+      }
+    }
+
+    async function startDetection() {
+      if (!handposeModel) await loadModel();
+      if (handposeModel) {
+        isDetecting = true;
+        errorMessage.textContent = '';
+        loading.textContent = '正在偵測...';
+        detectHand();
+        startButton.disabled = true;
+        stopButton.disabled = false;
+      } else {
+        errorMessage.textContent = '模型尚未準備就緒，請稍後再試。';
+      }
+    }
+
+    function stopDetection() {
+      isDetecting = false;
+      isCountingDown = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      loading.textContent = '';
+      cameraFeedback.textContent = '';
+      poseIcon.textContent = '';
+      animationContainer.textContent = '';
+      countdownElement.textContent = '';
+      startButton.disabled = false;
+      stopButton.disabled = true;
+    }
+
+    startButton.addEventListener('click', startDetection);
+    stopButton.addEventListener('click', stopDetection);
+
+    init();
+  </script>
+</body></html>
