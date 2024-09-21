@@ -1,0 +1,456 @@
+<html><head><base href="https://ai-sign-language-translator.example.com/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>進階手語翻譯系統 | Advanced Sign Language Translator</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --accent-color: #e74c3c;
+    --background-color: #ecf0f1;
+    --text-color: #34495e;
+    --card-bg-color: #ffffff;
+  }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 3em;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .game-area {
+    background-color: var(--card-bg-color);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+
+  .game-area:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+  }
+
+  #video-container {
+    width: 100%;
+    height: 480px;
+    background-color: #000;
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  #video, #canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  #canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+
+  .button {
+    flex: 1;
+    padding: 15px;
+    font-size: 18px;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  #start-button {
+    background-color: var(--secondary-color);
+    margin-right: 15px;
+  }
+
+  #start-button:hover {
+    background-color: #27ae60;
+  }
+
+  #stop-button {
+    background-color: var(--accent-color);
+  }
+
+  #stop-button:hover {
+    background-color: #c0392b;
+  }
+
+  #translation-result {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 18px;
+  }
+
+  #error-message, #loading {
+    text-align: center;
+    margin-top: 20px;
+    font-weight: bold;
+  }
+
+  #error-message {
+    color: var(--accent-color);
+  }
+
+  #loading {
+    color: var(--primary-color);
+  }
+
+  #instructions {
+    background-color: #f0f8ff;
+    border: 1px solid #b0d4ff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+
+  #instructions h2 {
+    color: var(--primary-color);
+    margin-top: 0;
+  }
+
+  #instructions ul {
+    padding-left: 20px;
+  }
+
+  #gesture-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin-top: 20px;
+  }
+
+  .gesture-item {
+    background-color: #f0f8ff;
+    border: 1px solid #b0d4ff;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px;
+    text-align: center;
+    width: calc(25% - 20px);
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+    }
+    .game-area {
+      padding: 20px;
+    }
+    #video-container {
+      height: 300px;
+    }
+    .button {
+      font-size: 16px;
+    }
+    .gesture-item {
+      width: calc(50% - 20px);
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>進階手語翻譯系統 | Advanced Sign Language Translator</h1>
+    <div class="game-area">
+      <div id="instructions">
+        <h2>使用說明</h2>
+        <ul>
+          <li>確保你的攝影機已開啟並授權使用。</li>
+          <li>點擊"開始翻譯"按鈕開始使用系統。</li>
+          <li>在攝影機前做出手語手勢。系統現在支援雙手識別！</li>
+          <li>系統會自動偵測你的手勢並顯示對應的翻譯。</li>
+          <li>如果同時檢測到兩隻手的手勢，翻譯將以"手勢1 + 手勢2"的形式顯示。</li>
+          <li>隨時可以點擊"停止翻譯"按鈕結束使用。</li>
+        </ul>
+      </div>
+      <div id="video-container">
+        <video id="video" autoplay muted></video>
+        <canvas id="canvas"></canvas>
+        <div id="translation-result"></div>
+      </div>
+      <div class="button-container">
+        <button id="start-button" class="button">開始翻譯</button>
+        <button id="stop-button" class="button" disabled>停止翻譯</button>
+      </div>
+      <div id="error-message"></div>
+      <div id="loading"></div>
+      <div id="gesture-list">
+        <div class="gesture-item">
+          <h3>你好</h3>
+          <p>拇指豎起，其他手指握拳</p>
+        </div>
+        <div class="gesture-item">
+          <h3>謝謝</h3>
+          <p>食指豎起，其他手指握拳</p>
+        </div>
+        <div class="gesture-item">
+          <h3>再見</h3>
+          <p>手掌張開，左右搖動</p>
+        </div>
+        <div class="gesture-item">
+          <h3>喜歡</h3>
+          <p>拇指和食指形成心形</p>
+        </div>
+        <div class="gesture-item">
+          <h3>和平</h3>
+          <p>食指和中指豎起，其他手指握拳</p>
+        </div>
+        <div class="gesture-item">
+          <h3>我愛你</h3>
+          <p>拇指、食指和小指豎起，其他手指握拳</p>
+        </div>
+        <div class="gesture-item">
+          <h3>打電話</h3>
+          <p>小指豎起，其他手指握拳</p>
+        </div>
+        <div class="gesture-item">
+          <h3>很好</h3>
+          <p>拇指和食指豎起，其他手指握拳</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const startButton = document.getElementById('start-button');
+    const stopButton = document.getElementById('stop-button');
+    const errorMessage = document.getElementById('error-message');
+    const loading = document.getElementById('loading');
+    const translationResults = document.getElementById('translation-result');
+
+    let handposeModel;
+    let isDetecting = false;
+
+    function detectGesture(predictions) {
+      if (predictions.length > 0) {
+        const gestures = predictions.map(hand => {
+          const thumbTip = hand.annotations.thumb[3];
+          const indexTip = hand.annotations.indexFinger[3];
+          const middleTip = hand.annotations.middleFinger[3];
+          const ringTip = hand.annotations.ringFinger[3];
+          const pinkyTip = hand.annotations.pinky[3];
+          
+          const thumbUp = thumbTip[1] < hand.annotations.thumb[2][1];
+          const indexUp = indexTip[1] < hand.annotations.indexFinger[0][1];
+          const middleUp = middleTip[1] < hand.annotations.middleFinger[0][1];
+          const ringUp = ringTip[1] < hand.annotations.ringFinger[0][1];
+          const pinkyUp = pinkyTip[1] < hand.annotations.pinky[0][1];
+          
+          if (thumbUp && !indexUp && !middleUp && !ringUp && !pinkyUp) {
+            return "你好";
+          } else if (!thumbUp && indexUp && !middleUp && !ringUp && !pinkyUp) {
+            return "謝謝";
+          } else if (thumbUp && indexUp && middleUp && ringUp && pinkyUp) {
+            return "再見";
+          } else if (
+            Math.abs(thumbTip[0] - indexTip[0]) < 30 &&
+            Math.abs(thumbTip[1] - indexTip[1]) < 30 &&
+            !middleUp && !ringUp && !pinkyUp
+          ) {
+            return "喜歡";
+          } else if (!thumbUp && indexUp && middleUp && !ringUp && !pinkyUp) {
+            return "和平";
+          } else if (thumbUp && indexUp && !middleUp && !ringUp && pinkyUp) {
+            return "我愛你";
+          } else if (!thumbUp && !indexUp && !middleUp && !ringUp && pinkyUp) {
+            return "打電話";
+          } else if (thumbUp && indexUp && !middleUp && !ringUp && !pinkyUp) {
+            return "很好";
+          }
+          return null;
+        });
+
+        if (gestures[0] && gestures[1]) {
+          return `${gestures[0]} + ${gestures[1]}`;
+        } else {
+          return gestures[0] || gestures[1] || null;
+        }
+      }
+      return null;
+    }
+
+    async function detectHand() {
+      if (!isDetecting) return;
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      try {
+        const predictions = await handposeModel.estimateHands(video, {
+          flipHorizontal: false,
+          maxHands: 2
+        });
+        
+        if (predictions.length > 0) {
+          const translation = detectGesture(predictions);
+          if (translation) {
+            translationResults.textContent = `翻譯: ${translation}`;
+          } else {
+            translationResults.textContent = '等待手勢...';
+          }
+
+          predictions.forEach(hand => drawHand(hand));
+        } else {
+          translationResults.textContent = '等待手勢...';
+        }
+
+        requestAnimationFrame(detectHand);
+      } catch (error) {
+        console.error('手勢偵測錯誤:', error);
+        errorMessage.textContent = '手勢偵測過程中發生錯誤，請重新開始。';
+        isDetecting = false;
+        startButton.disabled = false;
+        stopButton.disabled = true;
+      }
+    }
+
+    function drawHand(hand) {
+      const landmarks = hand.landmarks;
+
+      ctx.fillStyle = 'red';
+      for (let i = 0; i < landmarks.length; i++) {
+        const [x, y] = landmarks[i];
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      ctx.strokeStyle = 'blue';
+      ctx.lineWidth = 2;
+      const palmBase = landmarks[0];
+      const fingers = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+        [9, 10, 11, 12],
+        [13, 14, 15, 16],
+        [17, 18, 19, 20]
+      ];
+
+      fingers.forEach(finger => {
+        ctx.beginPath();
+        ctx.moveTo(palmBase[0], palmBase[1]);
+        finger.forEach(index => {
+          ctx.lineTo(landmarks[index][0], landmarks[index][1]);
+        });
+        ctx.stroke();
+      });
+    }
+
+    async function loadModel() {
+      loading.textContent = '正在載入手語翻譯系統，請稍候...';
+      try {
+        handposeModel = await handpose.load();
+        loading.textContent = '手語翻譯系統已準備就緒！';
+        errorMessage.textContent = '';
+      } catch (error) {
+        console.error('模型載入失敗:', error);
+        errorMessage.textContent = '模型載入失敗，請檢查網路連接並重新整理頁面。';
+        loading.textContent = '';
+      }
+    }
+
+    async function setupCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        video.srcObject = stream;
+        return new Promise((resolve) => {
+          video.onloadedmetadata = () => {
+            resolve(video);
+          };
+        });
+      } catch (error) {
+        console.error('攝影機設置失敗:', error);
+        errorMessage.textContent = '無法存取攝影機，請確保已授予權限。';
+      }
+    }
+
+    async function init() {
+      try {
+        await setupCamera();
+        video.play();
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        loading.textContent = '系統已準備就緒，請點擊"開始翻譯"按鈕。';
+      } catch (error) {
+        console.error('初始化失敗:', error);
+        errorMessage.textContent = '系統初始化失敗，請重新整理頁面。';
+        loading.textContent = '';
+      }
+    }
+
+    function startDetection() {
+      if (!handposeModel) loadModel();
+      if (handposeModel) {
+        isDetecting = true;
+        errorMessage.textContent = '';
+        loading.textContent = '正在偵測...';
+        detectHand();
+        startButton.disabled = true;
+        stopButton.disabled = false;
+      } else {
+        errorMessage.textContent = '模型尚未準備就緒，請稍後再試。';
+      }
+    }
+
+    function stopDetection() {
+      isDetecting = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      loading.textContent = '';
+      translationResults.textContent = '';
+      startButton.disabled = false;
+      stopButton.disabled = true;
+    }
+
+    startButton.addEventListener('click', startDetection);
+    stopButton.addEventListener('click', stopDetection);
+
+    init();
+  </script>
+</body></html>
